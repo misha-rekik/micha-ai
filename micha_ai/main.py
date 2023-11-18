@@ -32,11 +32,35 @@ async def generate_video():
     # Simulating a time-consuming task
     time.sleep(5)
     narration = get_narration("the little prince")
+    music = generate_music(book_title)
+
+@app.get("/test_openai1")
+def generate_music(book_title):
+    # Define a dictionary mapping labels to MP3 file paths or URLs
+    music_files = {
+        "dreamy": "micha-ai/micha_ai/audio/Now We Are Free.mp3" ,
+        "epic": "micha-ai/micha_ai/audio/Dreamy.mp3",
+        "fiction": "micha-ai/micha_ai/audio/Dreamy.mp3",
+        "romantic": "micha-ai/micha_ai/audio/Dreamy.mp3",
+    }
+    prompt = f"choose only one label for the book '{book_title}' from these labels (dreamy - epic - fiction - romantic ). the output should be in this specefic format: label:xxx. Can you also please only output the specified format, please do not include anything else."
+    messages = [
+        {"role": "user",
+         "content": prompt
+         },
+    ]
+    completion = client.chat.completions.create(model="gpt-3.5-turbo",
+    messages=messages)
+    reply = completion.choices[0].message.content
+    parts = reply.split(":")
+    label = parts[1].strip()
+    return music_files[label]
+
 
 @app.get("/test_openai")
 def get_narration(book_title: str):
 
-    template = (f"We want to generate a trailer for the book {book_title}, we plan to use DALL-E to generate the images for the trailer. Can you please provide us with short sentences for the trailer of the book and for every sentence please provide us with the necessary prompt we can use to generate images for the sentence with DALL-E. Please follow the following format for every sentences pair\n story: xxx\nscene: xxx\nCan you also please only output the specified format, please do not include anything else.")
+    template = (f"We want to generate a trailer for the book {book_title}, we plan to use DALL-E to generate the images for the trailer. Can you please provide us with short sentences that summarize the book in ordered events for the trailer of the book and for every sentence please provide us with the necessary prompt we can use to generate images for the sentence with DALL-E.Please in the sente Please follow the following format for every sentences pair\n story: xxx\nscene: xxx\nCan you also please only output the specified format, please do not include anything else.")
 
     messages = [
         {"role": "user",
@@ -70,7 +94,7 @@ def get_narration(book_title: str):
         my_dict[response.data[0].url]= stories_list[i]
         # my_dict[test_sentence]= stories_list[i]
         i=i+1
-    # print(my_dict)
+    print(my_dict)
 
     return my_dict
 
