@@ -15,3 +15,7 @@ pipx install poetry
 poetry install
 poetry shell
 poetry run <any command>
+
+
+
+pip install openai
