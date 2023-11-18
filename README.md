@@ -15,3 +15,7 @@ brew install pipx
 pipx install poetry
 poetry install
 poetry shell
+
+
+
+pip install openai
