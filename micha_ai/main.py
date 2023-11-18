@@ -31,9 +31,10 @@ load_dotenv()
 async def generate_video():
     # Simulating a time-consuming task
     time.sleep(5)
+    narration = get_narration("the little prince")
 
 @app.get("/test_openai")
-def test_openai_integration(book_title: str):
+def get_narration(book_title: str):
 
     template = (f"We want to generate a trailer for the book {book_title}, we plan to use DALL-E to generate the images for the trailer. Can you please provide us with short sentences for the trailer of the book and for every sentence please provide us with the necessary prompt we can use to generate images for the sentence with DALL-E. Please follow the following format for every sentences pair\n story: xxx\nscene: xxx\nCan you also please only output the specified format, please do not include anything else.")
 
@@ -61,20 +62,28 @@ def test_openai_integration(book_title: str):
         else:
             scenes_list.append(f"in the style of the book {book_title}, " + parts[1].strip())
 
-    test_sentence = scenes_list[0]
+    my_dict = {} 
+    i=0
+    # test_sentence = scenes_list[0]
+    for test_sentence in scenes_list:
+        response = client.images.generate(model="dall-e-3",prompt=test_sentence,quality="standard",n=1,)
+        my_dict[response.data[0].url]= stories_list[i]
+        # my_dict[test_sentence]= stories_list[i]
+        i=i+1
+    # print(my_dict)
 
-    print(test_sentence)
+    return my_dict
 
-    response = client.images.generate(
-    model="dall-e-3",
-    prompt=test_sentence,
-    quality="standard",
-    n=1,
-    )
+    # response = client.images.generate(
+    # model="dall-e-3",
+    # prompt=test_sentence,
+    # quality="standard",
+    # n=1,
+    # )
 
-    image_url = response.data[0].url
+    # image_url = response.data[0].url
 
-    return image_url
+    # return image_url
 
 @app.get("/")
 def read_root():
