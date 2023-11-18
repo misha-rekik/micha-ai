@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
 
 
 
@@ -23,7 +25,6 @@ app.add_middleware(
 
 app.mount("/video", StaticFiles(directory="video"), name="static")
 load_dotenv()
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 
 @app.post("/generate_video")
@@ -34,13 +35,46 @@ async def generate_video():
 @app.get("/test_openai")
 def test_openai_integration(book_title: str):
 
-    try:
-        response = client.completions.create(model="gpt-3.5-turbo",
-        prompt=f"Summarize the book '{book_title}' in a few sentences.")
-        generated_text = response['choices'][0]['message']['content']
-        return {"generated_text": generated_text}
-    except Exception as e:
-        return {"error": str(e)}
+    template = (f"We want to generate a trailer for the book {book_title}, we plan to use DALL-E to generate the images for the trailer. Can you please provide us with short sentences for the trailer of the book and for every sentence please provide us with the necessary prompt we can use to generate images for the sentence with DALL-E. Please follow the following format for every sentences pair\n story: xxx\nscene: xxx\nCan you also please only output the specified format, please do not include anything else.")
+
+    messages = [
+        {"role": "user",
+         "content": template
+         },
+    ]
+
+
+    completion = client.chat.completions.create(model="gpt-3.5-turbo",
+    messages=messages)
+    reply = completion.choices[0].message.content
+
+    stories_list = []
+    scenes_list = []
+
+    sentences = reply.split('\n')
+    filtered = list(filter(lambda x: x != '', sentences))
+
+    for sentence in filtered:
+        parts = sentence.split(":")
+        if parts[0][-1] == 'y':
+            stories_list.append(parts[1].strip())
+        else:
+            scenes_list.append(f"in the style of the book {book_title}, " + parts[1].strip())
+
+    test_sentence = scenes_list[0]
+
+    print(test_sentence)
+
+    response = client.images.generate(
+    model="dall-e-3",
+    prompt=test_sentence,
+    quality="standard",
+    n=1,
+    )
+
+    image_url = response.data[0].url
+
+    return image_url
 
 @app.get("/")
 def read_root():
