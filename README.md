@@ -8,10 +8,10 @@ uvicorn main:app --reload
 
 poetry run uvicorn main:app --reload
 
+## init poetry
 
-## for MacOS
-brew install rabbitmq
-brew install pipx 
+brew install pipx
 pipx install poetry
 poetry install
 poetry shell
+poetry run <any command>
